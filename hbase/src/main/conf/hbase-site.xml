@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
 /**
- * Copyright 2009 The Apache Software Foundation
+ * Copyright 2010 The Apache Software Foundation
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,22 +20,84 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    <value>/home/roman/hadoop_data/zookeeper</value>
+  </property>
 -->
 <configuration>
+
+
   <property>
     <name>hbase.rootdir</name>
-    <value>hdfs://<HBASE_MASTER_SERVER>:20001/hbase</value>
-    <description>The directory shared by region servers.
-    </description>
+    <value>hdfs://localhost:9000/hbase</value>
   </property>
+  
+<!--  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://ncehadm1.nce.amadeus.net:8020/user/rkarlstetter/hbasedata</value>
+  </property>-->
+  
   <property>
-    <name>hbase.master</name>
-    <value><HBASE_MASTER_SERVER>:60000</value>
-    <description>The host and port that the HBase master runs at.
-    </description>
+    <name>dfs.support.append</name>
+    <value>true</value>
   </property>
+  
+  <property>
+    <name>hbase.regionserver.global.memstore.upperLimit</name>
+    <value>0.3</value>
+  </property>
+   
+  <property>
+    <name>HConstants.MAJOR_COMPACTION_PERIOD</name>
+    <value>0</value>
+  </property>
+   
+  <property>
+    <name>hbase.cluster.distributed</name>
+    <value>false</value>
+  </property>
+  
+  <property>
+    <name>hbase.hregion.max.filesize</name>
+    <value>107374182400</value>
+  </property>
+  
   <property>
     <name>hbase.zookeeper.quorum</name>
-    <value><HBASE_MASTER_SERVER></value>
+    <value>localhost</value>
   </property>
+  
+  <property>
+    <name>hbase.client.keyvalue.maxsize</name>
+    <value>52428800</value> <!-- 50 MiB  -->
+  </property>
+  
+ <property>
+      <name>hbase.zookeeper.property.dataDir</name>
+      <value>/hadoopdata/zookeeper/</value>
+      <description>Property from ZooKeeper's config zoo.cfg.
+      The directory where the snapshot is stored.
+      </description>
+    </property>
+    
+  <property>
+    <name>hbase.coprocessor.region.classes</name>
+    <value>org.apache.hadoop.hbase.coprocessor.AggregateImplementation</value>
+  </property>
+  
+  <!--
+  <property>
+    <name>fs.default.name</name>
+    <value>hdfs://localhost:9000</value>
+  </property>  
+   <property>
+    <name>mapred.map.tasks.speculative.execution</name>
+    <value>false</value>
+  </property>
+  
+   <property>
+    <name>mapred.reduce.tasks.speculative.execution</name>
+    <value>false</value>
+  </property>-->
 </configuration>

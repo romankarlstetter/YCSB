@@ -21,9 +21,7 @@ import java.io.IOException;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -84,9 +82,8 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 			throw new DBException("No columnfamily specified");
 		}
 		_columnFamilyBytes = Bytes.toBytes(_columnFamily);
-
 	}
-
+	
 	/**
 	 * Cleanup any state for this DB. Called once per DB instance; there is one
 	 * DB instance per client thread.
@@ -109,13 +106,7 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 
 	public void getHTable(String table) throws IOException {
 		synchronized (tableLock) {
-			Iterator<Entry<String, String>> iter = config.iterator();
-			while(iter.hasNext()){
-				System.out.println(iter.next());
-			}
-			System.out.println("create " +table + "with ");
 			_hTable = new HTable(config, table);
-			System.out.println("created " +table);
 			// 2 suggestions from
 			// http://ryantwopointoh.blogspot.com/2009/01/performance-of-hbase-importing.html
 			_hTable.setAutoFlush(false);

@@ -18,9 +18,16 @@
 package com.yahoo.ycsb;
 
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Vector;
 
 import com.yahoo.ycsb.measurements.Measurements;
 import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
@@ -398,7 +405,7 @@ public class Client
 				out = System.out;
 			} else
 			{
-				out = new FileOutputStream(exportFile);
+				out = new FileOutputStream(exportFile + new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date()));
 			}
 
 			// if no exporter is provided the default text one will be used

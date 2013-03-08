@@ -29,14 +29,16 @@ class SeriesUnit
 {
 	/**
 	 * @param time
-	 * @param average
+	 * @param averageLatency
 	 */
-	public SeriesUnit(long time, double average) {
+	public SeriesUnit(long time, double averageLatency, double averageThroughput) {
 		this.time = time;
-		this.average = average;
+		this.averageLatency = averageLatency;
+		this.averageThroughput = averageThroughput;
 	}
 	public long time;
-	public double average; 
+	public double averageLatency;
+	public double averageThroughput;
 }
 
 /**
@@ -93,7 +95,9 @@ public class OneMeasurementTimeSeries extends OneMeasurement
 		if ( (unit>currentunit) || (forceend) )
 		{
 			double avg=((double)sum)/((double)count);
-			_measurements.add(new SeriesUnit(currentunit,avg));
+			long actualIntervalLength = now - (start + currentunit);
+			double throughput = ((double)count)/((double)actualIntervalLength) * 1000.0;
+			_measurements.add(new SeriesUnit(currentunit,avg,throughput));
 			
 			currentunit=unit;
 			
@@ -146,7 +150,12 @@ public class OneMeasurementTimeSeries extends OneMeasurement
 
     for (SeriesUnit unit : _measurements)
     {
-      exporter.write(getName(), Long.toString(unit.time), unit.average);
+      exporter.write(getName(), Long.toString(unit.time), unit.averageLatency);
+    }
+    
+    for (SeriesUnit unit : _measurements)
+    {
+    	exporter.write(getName()+"_THROUGHPUT", Long.toString(unit.time), unit.averageThroughput);
     }
   }
 	

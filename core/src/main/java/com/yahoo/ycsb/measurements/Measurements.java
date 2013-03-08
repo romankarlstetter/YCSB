@@ -18,7 +18,10 @@
 package com.yahoo.ycsb.measurements;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
@@ -33,7 +36,7 @@ public class Measurements
 {
 	private static final String MEASUREMENT_TYPE = "measurementtype";
 
-	private static final String MEASUREMENT_TYPE_DEFAULT = "histogram";
+	private static final String MEASUREMENT_TYPE_DEFAULT = "HISTOGRAM:com.yahoo.ycsb.measurements.OneMeasurementHistogram,TIMESERIES:com.yahoo.ycsb.measurements.OneMeasurementTimeSeries";
 
 	static Measurements singleton=null;
 	
@@ -57,65 +60,74 @@ public class Measurements
 	}
 
 	HashMap<String,OneMeasurement> data;
-	boolean histogram=true;
 
 	private Properties _props;
+	private Map<String,Class<? extends OneMeasurement>> measurementClasses;
 	
       /**
        * Create a new object with the specified properties.
        */
+	@SuppressWarnings("unchecked")
 	public Measurements(Properties props)
 	{
 		data=new HashMap<String,OneMeasurement>();
 		
 		_props=props;
 		
-		if (_props.getProperty(MEASUREMENT_TYPE, MEASUREMENT_TYPE_DEFAULT).compareTo("histogram")==0)
-		{
-			histogram=true;
+		measurementClasses = new HashMap<>();
+		String[] measurementCls = _props.getProperty(MEASUREMENT_TYPE, MEASUREMENT_TYPE_DEFAULT).split(",");
+		
+		for(String mClassDescription : measurementCls){
+			try {
+				String[] cls = mClassDescription.split(":");
+				if(cls.length < 2){
+					System.err.println("Invalid format, use LABEL:com.example.package.classname");
+				}
+				measurementClasses.put(cls[0]+"_", (Class<? extends OneMeasurement>) Class.forName(cls[1]));
+			} catch (ClassNotFoundException e) {
+				System.err.println("Didn't find class " + mClassDescription);
+				
+			}
+			
 		}
-		else
-		{
-			histogram=false;
-		}
-	}
-	
-	OneMeasurement constructOneMeasurement(String name)
-	{
-		if (histogram)
-		{
-			return new OneMeasurementHistogram(name,_props);
-		}
-		else
-		{
-			return new OneMeasurementTimeSeries(name,_props);
-		}
+		//measurementClasses.put("TIMESERIES_", OneMeasurementTimeSeries.class);
 	}
 
       /**
        * Report a single value of a single metric. E.g. for read latency, operation="READ" and latency is the measured value.
        */
-	public synchronized void measure(String operation, int latency)
+	public void measure(String operation, int latency) 
 	{
-		if (!data.containsKey(operation))
-		{
-			synchronized(this)
+		initDataForOperation(operation);
+		for(String k: measurementClasses.keySet()){
+			String dataKey = k+operation;
+			data.get(dataKey).measure(latency);			
+		}
+	}
+	
+	private void initDataForOperation(String operation){
+		for(String k: measurementClasses.keySet()){
+			String dataKey = k+operation;
+			if (!data.containsKey(dataKey))
 			{
-				if (!data.containsKey(operation))
+				synchronized(this)
 				{
-					data.put(operation,constructOneMeasurement(operation));
+					if (!data.containsKey(dataKey))
+					{
+						Constructor<? extends OneMeasurement> ctor = null;
+						try {
+							ctor = measurementClasses.get(k).getConstructor(String.class, Properties.class);
+							OneMeasurement m = ctor.newInstance(dataKey, _props);
+							data.put(dataKey,m);
+						} catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e){
+							// do not handle non working OneMeasurements
+							System.err.println("Ignore Measurement class " + measurementClasses.get(k).getCanonicalName());
+							measurementClasses.remove(k);
+						}
+						
+					}
 				}
 			}
-		}
-		try
-		{
-			data.get(operation).measure(latency);
-		}
-		catch (java.lang.ArrayIndexOutOfBoundsException e)
-		{
-			System.out.println("ERROR: java.lang.ArrayIndexOutOfBoundsException - ignoring and continuing");
-			e.printStackTrace();
-			e.printStackTrace(System.out);
 		}
 	}
 
@@ -124,17 +136,11 @@ public class Measurements
        */
 	public void reportReturnCode(String operation, int code)
 	{
-		if (!data.containsKey(operation))
-		{
-			synchronized(this)
-			{
-				if (!data.containsKey(operation))
-				{
-					data.put(operation,constructOneMeasurement(operation));
-				}
-			}
+		initDataForOperation(operation);
+		for(String k: measurementClasses.keySet()){
+			String dataKey = k+operation;
+			data.get(dataKey).reportReturnCode(code);
 		}
-		data.get(operation).reportReturnCode(code);
 	}
 	
   /**

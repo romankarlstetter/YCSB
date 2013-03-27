@@ -82,6 +82,9 @@ public class HBaseClient extends com.yahoo.ycsb.DB {
 			throw new DBException("No columnfamily specified");
 		}
 		_columnFamilyBytes = Bytes.toBytes(_columnFamily);
+		
+		String zookeeperQuorum = getProperties().getProperty("hbase.zookeeper.quorum", "localhost");
+		config.set("hbase.zookeeper.quorum", zookeeperQuorum);
 	}
 	
 	/**
